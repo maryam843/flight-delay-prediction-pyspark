@@ -1,0 +1,13 @@
+# Data files (download from Kaggle, see data/README.md)
+*.csv
+*.parquet
+
+# Python
+__pycache__/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Spark
+spark-warehouse/
+metastore_db/
