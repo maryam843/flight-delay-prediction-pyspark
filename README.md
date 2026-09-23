@@ -160,10 +160,6 @@ All train vs test AUC gaps are under 0.01, so none of the models is overfitting.
 
 ![GBT feature importance](figures/gbt_feature_importance.png)
 
-**Random Forest feature importance.** This figure comes from an earlier run. The current notebook only plots GBT importance.
-
-![RF feature importance](figures/rf_feature_importance.png)
-
 **GBT threshold tuning.** The red line marks 0.35, which the plot code labels "Suggested threshold". The threshold chosen in the analysis is 0.20, where delayed-class F1 is highest.
 
 ![Threshold tuning](figures/threshold_tuning.png)
@@ -181,7 +177,6 @@ flight-delay-prediction-pyspark/
 │   ├── eda_overview.png
 │   ├── eda_extended.png
 │   ├── gbt_feature_importance.png
-│   ├── rf_feature_importance.png
 │   └── threshold_tuning.png
 └── notebooks/
     └── flight_delay_prediction_pyspark.ipynb
