@@ -20,42 +20,15 @@ Predicting whether a US domestic flight will depart 15 or more minutes late, usi
 - **Operations control:** a pre-departure delay risk score gives time to position spare aircraft, call reserve crew, or protect tight turnarounds.
 - **Hub connections:** at hubs, one late departure can break connections for transfer passengers, so flagging at-risk departures helps with rebooking and gate planning.
 
-## Approach
-
-- **Pre-departure features only:** schedule, carrier, airports and distance. `dep_delay` is used only to build the label.
-- **Cyclical encoding:** month, day of week, day of month and departure time as sine/cosine pairs.
-- **StringIndexer + Pipelines:** carrier and airports indexed inside MLlib Pipelines fitted on training data only.
-- **Class weights:** 20.6% of flights are delayed (3.86 : 1), so LR and RF use a weight of 3.86 on delayed flights.
-- **CrossValidator + threshold tuning:** 3-fold CV over GBT depth and iterations, then the decision threshold is tuned without retraining.
-
 ## Results
 
-Test set of 334,277 flights. F1 is weighted across both classes.
+| Model | Weighted F1 | AUC-ROC | AUC-PR |
+|---|---|---|---|
+| Logistic Regression | 0.6215 | 0.6519 | 0.3058 |
+| Random Forest | 0.6440 | 0.6674 | 0.3368 |
+| GBT | 0.7270 | 0.6975 | 0.3724 |
 
-| Model | Accuracy | Weighted F1 | AUC-ROC | AUC-PR |
-|---|---|---|---|---|
-| Logistic Regression | 0.5814 | 0.6215 | 0.6519 | 0.3058 |
-| Random Forest | 0.6062 | 0.6440 | 0.6674 | 0.3368 |
-| GBT (untuned) | 0.7963 | 0.7270 | 0.6975 | 0.3724 |
-| GBT (tuned, CV) | 0.7963 | 0.7270 | 0.6975 | 0.3724 |
-
-GBT threshold tuning (delayed class):
-
-| Threshold | Accuracy | Precision | Recall | F1 (delayed) |
-|---|---|---|---|---|
-| 0.10 | 0.2957 | 0.2218 | 0.9689 | 0.3610 |
-| 0.15 | 0.4846 | 0.2637 | 0.8424 | 0.4016 |
-| **0.20** | **0.6325** | **0.3134** | **0.6631** | **0.4256** |
-| 0.25 | 0.7138 | 0.3590 | 0.5016 | 0.4185 |
-| 0.30 | 0.7585 | 0.4017 | 0.3598 | 0.3796 |
-| 0.35 | 0.7811 | 0.4434 | 0.2589 | 0.3269 |
-| 0.40 | 0.7933 | 0.4897 | 0.1567 | 0.2374 |
-| 0.45 | 0.7963 | 0.5226 | 0.0902 | 0.1539 |
-| 0.50 | 0.7963 | 0.5323 | 0.0650 | 0.1159 |
-
-![Threshold tuning](figures/threshold_tuning.png)
-
-The red line in the plot marks 0.35, which the plot code labels "Suggested threshold". The threshold chosen in the analysis is 0.20, where delayed-class F1 is highest.
+Lowering the GBT threshold to 0.20 catches 66.3% of delays instead of 6.5%; see [docs/analysis.md](docs/analysis.md).
 
 ## Key insights
 
@@ -67,23 +40,12 @@ The red line in the plot marks 0.35, which the plot code labels "Suggested thres
 
 ## Limitations
 
-- **Data loss in cleaning:** the cancelled-flight filter removed 31% of rows, far above typical cancellation rates, and the null drop removed about half of the sample. Both need to be checked.
-- **Threshold picked on the test set:** the threshold-tuned metrics are somewhat optimistic.
-- **GBT trained without class weights:** only LR and RF used `weightCol`.
-- **No weather or air traffic control data** in the feature set.
+- The cancelled filter (31% of rows) and null drop (about half the sample) removed more data than expected and need checking.
+- The threshold was picked on the test set, so tuned metrics are somewhat optimistic.
+- GBT was trained without class weights; only LR and RF used `weightCol`.
+- No weather or air traffic control data in the features.
 
 Full details: [docs/analysis.md](docs/analysis.md)
-
-## Repository structure
-
-```
-├── README.md
-├── requirements.txt
-├── data/README.md          # dataset source and columns used (raw data not included)
-├── docs/analysis.md        # detailed tables, limitations, next steps, EDA figures
-├── figures/                # plots saved from the notebook
-└── notebooks/flight_delay_prediction_pyspark.ipynb
-```
 
 ## How to run
 
@@ -91,8 +53,4 @@ Full details: [docs/analysis.md](docs/analysis.md)
 2. Upload it to Google Drive at `MyDrive/DSAI4202_Project/flight_data_2024.csv`, or change the path in the data loading cell.
 3. Open the notebook in Google Colab and run the cells from top to bottom.
 
-The saved outputs come from a run on Spark 4.0.2. Cells were not run strictly in order, so a fresh run may differ slightly.
-
-## Requirements
-
-`pip install -r requirements.txt` (pyspark, pandas, numpy, matplotlib, seaborn). Outside Colab you also need Java 17 or later, and you need to replace the Google Drive path.
+Requirements: see [requirements.txt](requirements.txt).

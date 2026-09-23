@@ -2,6 +2,60 @@
 
 Supporting detail for the [project README](../README.md). All numbers come from the saved outputs of [the notebook](../notebooks/flight_delay_prediction_pyspark.ipynb).
 
+## Approach
+
+- **Pre-departure features only:** schedule, carrier, airports and distance. `dep_delay` is used only to build the label.
+- **Cyclical encoding:** month, day of week, day of month and departure time as sine/cosine pairs.
+- **StringIndexer + Pipelines:** carrier and airports indexed inside MLlib Pipelines fitted on training data only.
+- **Class weights:** 20.6% of flights are delayed (3.86 : 1), so LR and RF use a weight of 3.86 on delayed flights.
+- **CrossValidator + threshold tuning:** 3-fold CV over GBT depth and iterations, then the decision threshold is tuned without retraining.
+
+## Main results
+
+Test set of 334,277 flights. F1 is weighted across both classes.
+
+| Model | Accuracy | Weighted F1 | AUC-ROC | AUC-PR |
+|---|---|---|---|---|
+| Logistic Regression | 0.5814 | 0.6215 | 0.6519 | 0.3058 |
+| Random Forest | 0.6062 | 0.6440 | 0.6674 | 0.3368 |
+| GBT (untuned) | 0.7963 | 0.7270 | 0.6975 | 0.3724 |
+| GBT (tuned, CV) | 0.7963 | 0.7270 | 0.6975 | 0.3724 |
+
+GBT threshold tuning (delayed class). The full table, including thresholds 0.55 to 0.85, is in [Threshold tuning](#threshold-tuning) below.
+
+| Threshold | Accuracy | Precision | Recall | F1 (delayed) |
+|---|---|---|---|---|
+| 0.10 | 0.2957 | 0.2218 | 0.9689 | 0.3610 |
+| 0.15 | 0.4846 | 0.2637 | 0.8424 | 0.4016 |
+| **0.20** | **0.6325** | **0.3134** | **0.6631** | **0.4256** |
+| 0.25 | 0.7138 | 0.3590 | 0.5016 | 0.4185 |
+| 0.30 | 0.7585 | 0.4017 | 0.3598 | 0.3796 |
+| 0.35 | 0.7811 | 0.4434 | 0.2589 | 0.3269 |
+| 0.40 | 0.7933 | 0.4897 | 0.1567 | 0.2374 |
+| 0.45 | 0.7963 | 0.5226 | 0.0902 | 0.1539 |
+| 0.50 | 0.7963 | 0.5323 | 0.0650 | 0.1159 |
+
+![Threshold tuning](../figures/threshold_tuning.png)
+
+The red line in the plot marks 0.35, which the plot code labels "Suggested threshold". The threshold chosen in the analysis is 0.20, where delayed-class F1 is highest.
+
+## Repository structure
+
+```
+├── README.md
+├── requirements.txt
+├── data/README.md          # dataset source and columns used (raw data not included)
+├── docs/analysis.md        # detailed tables, limitations, next steps, EDA figures
+├── figures/                # plots saved from the notebook
+└── notebooks/flight_delay_prediction_pyspark.ipynb
+```
+
+## Requirements and run notes
+
+`pip install -r requirements.txt` (pyspark, pandas, numpy, matplotlib, seaborn). Outside Colab you also need Java 17 or later, and you need to replace the Google Drive path.
+
+The saved outputs come from a run on Spark 4.0.2. Cells were not run strictly in order, so a fresh run may differ slightly.
+
 ## Data and preprocessing
 
 Source: [Flight Data 2024 on Kaggle](https://www.kaggle.com/datasets/hrishitpatil/flight-data-2024) (7,079,081 rows x 35 columns). The raw data is not included here. See [data/README.md](../data/README.md) for download and placement.
