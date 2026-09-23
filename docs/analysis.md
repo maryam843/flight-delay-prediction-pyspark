@@ -2,6 +2,16 @@
 
 Supporting detail for the [project README](../README.md). All numbers come from the saved outputs of [the notebook](../notebooks/flight_delay_prediction_pyspark.ipynb).
 
+## Key insights
+
+- **Departure time is the top feature** (GBT importance about 0.23). Delays build up over the day as earlier late arrivals push back later departures.
+- **July and Friday peaks:** July has the highest average delay (about 22 minutes) and Friday the highest by day of week (about 14 to 15 minutes).
+- **Carriers differ:** F9 (Frontier) has the highest delay rate at about 28%. HA (Hawaiian) and YX have the lowest.
+- **Hub airports:** among the 10 busiest airports, DFW (about 27%) and CLT (about 26%) have the highest delay rates.
+- **Distance barely matters:** near-zero GBT importance and a 0.02 correlation with the label.
+
+![GBT feature importance](../figures/gbt_feature_importance.png)
+
 ## Approach
 
 - **Pre-departure features only:** schedule, carrier, airports and distance. `dep_delay` is used only to build the label.
@@ -21,19 +31,7 @@ Test set of 334,277 flights. F1 is weighted across both classes.
 | GBT (untuned) | 0.7963 | 0.7270 | 0.6975 | 0.3724 |
 | GBT (tuned, CV) | 0.7963 | 0.7270 | 0.6975 | 0.3724 |
 
-GBT threshold tuning (delayed class). The full table, including thresholds 0.55 to 0.85, is in [Threshold tuning](#threshold-tuning) below.
-
-| Threshold | Accuracy | Precision | Recall | F1 (delayed) |
-|---|---|---|---|---|
-| 0.10 | 0.2957 | 0.2218 | 0.9689 | 0.3610 |
-| 0.15 | 0.4846 | 0.2637 | 0.8424 | 0.4016 |
-| **0.20** | **0.6325** | **0.3134** | **0.6631** | **0.4256** |
-| 0.25 | 0.7138 | 0.3590 | 0.5016 | 0.4185 |
-| 0.30 | 0.7585 | 0.4017 | 0.3598 | 0.3796 |
-| 0.35 | 0.7811 | 0.4434 | 0.2589 | 0.3269 |
-| 0.40 | 0.7933 | 0.4897 | 0.1567 | 0.2374 |
-| 0.45 | 0.7963 | 0.5226 | 0.0902 | 0.1539 |
-| 0.50 | 0.7963 | 0.5323 | 0.0650 | 0.1159 |
+Lowering the GBT threshold to 0.20 catches 66.3% of delays instead of 6.5%. The full threshold table is in [Threshold tuning](#threshold-tuning) below.
 
 ![Threshold tuning](../figures/threshold_tuning.png)
 
@@ -45,7 +43,7 @@ The red line in the plot marks 0.35, which the plot code labels "Suggested thres
 ├── README.md
 ├── requirements.txt
 ├── data/README.md          # dataset source and columns used (raw data not included)
-├── docs/analysis.md        # detailed tables, limitations, next steps, EDA figures
+├── docs/analysis.md        # results, insights, limitations, next steps, figures
 ├── figures/                # plots saved from the notebook
 └── notebooks/flight_delay_prediction_pyspark.ipynb
 ```
